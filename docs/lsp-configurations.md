@@ -55,7 +55,9 @@ vim.lsp.config("lua_ls", {
 
 Source: https://github.com/yioneko/vtsls
 
-> ✅ **Recommended**. Wraps VS Code's TypeScript language service — richer features and better performance than `ts_ls`.
+> ✅ **Recommended for TypeScript ≤ 6**. Wraps VS Code's TypeScript language service — richer features and better performance than `ts_ls`.
+> It bundles its own TypeScript (5.9.x), so it works even if the project does not install `typescript`.
+> For **TypeScript 7+** use [`tsc`](#tsc-typescript-7-native-formerly-tsgo) instead — TS 7 dropped the JS language-service API vtsls is built on.
 
 ```lua
 vim.lsp.config("vtsls", {
@@ -76,16 +78,19 @@ vim.lsp.config("vtsls", {
 
 ---
 
-### tsgo
+### tsc (TypeScript 7 native, formerly tsgo)
 
-Source: https://github.com/microsoft/typescript-go
+Source: https://github.com/microsoft/typescript
 
-> Microsoft's next-gen TypeScript compiler rewritten in Go. Still in preview — APIs may change.
+> ✅ **Recommended for TypeScript 7+**.
+> Microsoft's TypeScript 7 compiler is written in Go and serves LSP via `tsc --lsp`.
+> Requires TypeScript **7.0+** — the local `typescript` or a `tsc` on `$PATH` must support `--lsp`, otherwise the server won't attach.
+> nvim-lspconfig renamed this config from `tsgo` to `tsc` (`tsgo` is deprecated and will be removed in lspconfig 3.0.0).
 
 ```lua
-vim.lsp.config("tsgo", {
+vim.lsp.config("tsc", {
   settings = {
-    typescript = {
+    ["js/ts"] = {
       inlayHints = {
         parameterNames = { enabled = "literals" },
         parameterTypes = { enabled = true },
@@ -141,24 +146,25 @@ vim.lsp.config("ts_ls", {
 Source: https://github.com/denoland/deno/tree/main/cli/lsp
 
 ```lua
+local inlay_hints = {
+  parameterNames = {
+    enabled = "all",                    -- "none" | "literals" | "all"
+    suppressWhenArgumentMatchesName = true,
+  },
+  parameterTypes = { enabled = true },
+  variableTypes = {
+    enabled = true,
+    suppressWhenTypeMatchesName = true,
+  },
+  propertyDeclarationTypes = { enabled = true },
+  functionLikeReturnTypes = { enabled = true },
+  enumMemberValues = { enabled = true },
+}
+
 vim.lsp.config("denols", {
   settings = {
-    deno = {
-      inlayHints = {
-        parameterNames = {
-          enabled = "all",                    -- "none" | "literals" | "all"
-          suppressWhenArgumentMatchesName = true,
-        },
-        parameterTypes = { enabled = true },
-        variableTypes = {
-          enabled = true,
-          suppressWhenTypeMatchesName = true,
-        },
-        propertyDeclarationTypes = { enabled = true },
-        functionLikeReturnTypes = { enabled = true },
-        enumMemberValues = { enabled = true },
-      },
-    },
+    javascript = { inlayHints = inlay_hints },
+    typescript = { inlayHints = inlay_hints },
   },
 })
 ```
@@ -412,7 +418,7 @@ Configure the following in lazy.nvim for rustaceanvim:
   version = "^7", -- Recommended
   ft = { "rust" },
   lazy = false,
-  init_option = function()
+  init = function()
     vim.g.rustaceanvim = {
       server = {
         default_settings = {
@@ -441,7 +447,10 @@ Source: https://github.com/dotnet/roslyn
 Plugin: https://github.com/seblj/roslyn.nvim
 
 > Replaces the discontinued OmniSharp. Used by the VS Code C# extension.
-> Use `roslyn_ls` instead of `roslyn` if you are using native nvim-lspconfig without the `roslyn.nvim` plugin.
+> The config name depends on the setup: **`roslyn`** comes from [roslyn.nvim](https://github.com/seblj/roslyn.nvim)
+> (it also handles daemon mode, solution targets and server discovery).
+> Without the plugin, nvim-lspconfig ships **`roslyn_ls`** instead — install the server with
+> `dotnet tool install -g roslyn-language-server --prerelease` and swap the name; the settings below are identical.
 
 ```lua
 vim.lsp.config("roslyn", {
@@ -527,11 +536,13 @@ vim.lsp.config("fsautocomplete", {
 
 Source: https://github.com/zigtools/zls
 
+> zls **0.17** no longer exposes a global `enable_inlay_hints` switch in its settings schema.
+> Each hint kind has its own flag and all of them are **enabled by default** — set the ones you don't want to `false`.
+
 ```lua
 vim.lsp.config("zls", {
   settings = {
     zls = {
-      enable_inlay_hints = true,                              -- Global enable
       inlay_hints_show_builtin = true,                        -- Show builtin function hints
       inlay_hints_show_parameter_name = true,                 -- Show parameter name hints
       inlay_hints_show_variable_type_hints = true,            -- Show variable type hints
@@ -591,14 +602,17 @@ vim.lsp.config("kotlin_language_server", {
 
 ---
 
-### kotlin-lsp (JetBrains official, pre-alpha)
+### kotlin-lsp (JetBrains official, alpha)
 
 Source: https://github.com/Kotlin/kotlin-lsp
 
-> **Pre-alpha / experimental**. Based on IntelliJ IDEA. Currently only JVM-only Gradle projects are supported.
+> **Alpha**. Based on IntelliJ IDEA. Supports JVM **Gradle / Maven** projects (Android Gradle Plugin support is experimental, KMP is planned).
+> nvim-lspconfig ships this server as **`kotlin_lsp`** — `vim.lsp.config("kotlin", ...)` silently does nothing.
+> Put the archive's `bin/` on `$PATH`: nvim-lspconfig launches `intellij-server --stdio`
+> (the old `kotlin-lsp.sh` launcher is deprecated upstream).
 
 ```lua
-vim.lsp.config("kotlin", {
+vim.lsp.config("kotlin_lsp", {
   settings = {
     ["jetbrains.kotlin.hints"] = {
       settings = {
@@ -609,7 +623,7 @@ vim.lsp.config("kotlin", {
       },
       type = {
         ["function"] = {
-          return = true,      -- Function return type hints
+          ["return"] = true,  -- Function return type hints (reserved word in Lua)
           parameter = true,   -- Function parameter type hints
         },
       },
@@ -630,8 +644,6 @@ vim.lsp.config("kotlin", {
 ### Metals (Scala)
 
 Source: https://github.com/scalameta/metals
-
-> All inlay hint options are **disabled by default**.
 
 ```lua
 vim.lsp.config("metals", {
@@ -746,30 +758,9 @@ vim.lsp.config("intelephense", {
 
 ---
 
-### phpactor (PHP)
-
-Source: https://github.com/phpactor/phpactor
-
-> **Experimental**. Inlay hints are disabled by default for performance reasons.
-
-```lua
-vim.lsp.config("phpactor", {
-  settings = {
-    language_server_worse_reflection = {
-      inlay_hints = {
-        enable = true,  -- Master switch
-        types = true,   -- Variable type hints
-        params = true,  -- Parameter name hints
-      },
-    },
-  },
-})
-```
-
----
-
 ### expert (Elixir)
 
-Source: https://github.com/elixir-lang/expert
+Source: https://github.com/expert-lsp/expert
 
-> **Not yet supported**. Expert is the official Elixir language server, currently in alpha. Inlay hints are not implemented yet — stay tuned for future updates.
+> **Not yet supported**. Expert is the official Elixir language server — still alpha, latest stable `v0.2.2` with nightly builds.
+> Its `ServerCapabilities` does not include `inlayHintProvider`, so inlay hints are not implemented yet.
