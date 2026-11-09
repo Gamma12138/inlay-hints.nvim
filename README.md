@@ -7,6 +7,25 @@ A minimal Neovim plugin that simplifies enabling Neovim's **official LSP inlay h
 >
 > **You do not need to install this plugin** to use inlay hints. Neovim has built-in support since 0.10+. The most valuable part of this repo is the [LSP Server Configuration](#lsp-server-configuration) section below — you can copy those server settings directly into your own config.
 
+> [!NOTE]
+> **Repository moved — this is the continuation of `MysticalDevil/inlay-hints.nvim`**
+>
+> This repository is a fork of the original project by the same author, with the full git history and code preserved. The original repository is no longer reachable: the upstream GitHub account (`MysticalDevil`) was suspended, so its URL now returns 404. An appeal was filed but has not been answered.
+>
+> **New canonical URL:** <https://github.com/Gamma12138/inlay-hints.nvim>
+>
+> If you already have the plugin installed, just point your plugin manager at the new URL (no code changes needed):
+>
+> ```lua
+> -- lazy.nvim
+> { "Gamma12138/inlay-hints.nvim", event = "LspAttach" }
+> ```
+>
+> ```lua
+> -- vim.pack
+> { src = "https://github.com/Gamma12138/inlay-hints.nvim" }
+> ```
+
 ---
 
 ## Requirements
@@ -19,14 +38,14 @@ A minimal Neovim plugin that simplifies enabling Neovim's **official LSP inlay h
 
 ## Installation
 
-Install `MysticalDevil/inlay-hints.nvim` with your preferred plugin manager.
+Install `Gamma12138/inlay-hints.nvim` with your preferred plugin manager.
 
 ### lazy.nvim
 
 ```lua
 require("lazy").setup({
   {
-    "MysticalDevil/inlay-hints.nvim",
+    "Gamma12138/inlay-hints.nvim",
     event = "LspAttach",
     dependencies = { "neovim/nvim-lspconfig" }, -- optional
     config = function()
@@ -40,7 +59,7 @@ require("lazy").setup({
 
 ```lua
 vim.pack.add({
-  { src = 'https://github.com/MysticalDevil/inlay-hints.nvim' },
+  { src = 'https://github.com/Gamma12138/inlay-hints.nvim' },
 })
 
 require("inlay-hints").setup()
